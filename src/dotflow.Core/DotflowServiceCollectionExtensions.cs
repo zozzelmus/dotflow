@@ -1,3 +1,4 @@
+using System.Reflection;
 using Dotflow.Abstractions;
 using Dotflow.Builder;
 using Dotflow.Configuration;
@@ -48,6 +49,19 @@ public static class DotflowServiceCollectionExtensions
                 sp.GetRequiredService<IReadOnlyList<WorkflowDefinition>>(),
                 sp.GetRequiredService<WorkflowValidator>(),
                 sp.GetRequiredService<ILogger<DotflowHostedService>>()));
+
+        return services;
+    }
+
+    public static IServiceCollection AddDotflowTasksFromAssembly(
+        this IServiceCollection services,
+        Assembly assembly)
+    {
+        var taskTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(DotflowTask).IsAssignableFrom(t));
+
+        foreach (var type in taskTypes)
+            services.AddTransient(type);
 
         return services;
     }

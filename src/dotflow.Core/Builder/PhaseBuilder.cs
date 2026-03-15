@@ -25,9 +25,26 @@ public class PhaseBuilder
         return this;
     }
 
+    public PhaseBuilder TriggeredOn(Type eventType)
+    {
+        if (!typeof(DotflowEvent).IsAssignableFrom(eventType))
+            throw new ArgumentException($"Type '{eventType.Name}' must inherit from DotflowEvent.", nameof(eventType));
+        var triggerType = typeof(OnEvent<>).MakeGenericType(eventType);
+        _definition.Trigger = (PhaseTrigger)Activator.CreateInstance(triggerType)!;
+        return this;
+    }
+
     public PhaseBuilder AddTask<T>() where T : DotflowTask
     {
         _definition.Tasks.Add(new TaskSlot.SingleTask(typeof(T)));
+        return this;
+    }
+
+    public PhaseBuilder AddTask(Type taskType)
+    {
+        if (!typeof(DotflowTask).IsAssignableFrom(taskType))
+            throw new ArgumentException($"Type '{taskType.Name}' must inherit from DotflowTask.", nameof(taskType));
+        _definition.Tasks.Add(new TaskSlot.SingleTask(taskType));
         return this;
     }
 
