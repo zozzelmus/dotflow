@@ -36,6 +36,13 @@ public sealed class PhaseExecutor
 
         _logger.LogInformation("Starting phase {PhaseName}", phase.Name);
 
+        using var phaseScope = _logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["WorkflowRunId"] = workflowRunId,
+            ["PhaseRunId"]    = phaseRun.Id,
+            ["PhaseName"]     = phase.Name
+        });
+
         try
         {
             foreach (var slot in phase.Tasks)
@@ -56,9 +63,26 @@ public sealed class PhaseExecutor
                     case TaskSlot.ConcurrentGroup group:
                         // Single snapshot before the group starts — all tasks in the group see the same input.
                         var groupInput = Merge(originalInput, sharedContext);
-                        var concurrentTasks = group.TaskTypes.Select(taskType =>
-                            ExecuteSlotAsync(taskType, phaseRun, workflowRunId, groupInput, sharedContext, phase, loggerFactory, ct));
-                        await Task.WhenAll(concurrentTasks);
+
+                        if (phase.FailFastOnGroupFailure)
+                        {
+                            using var groupCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                            var groupTasks = group.TaskTypes.Select(taskType => ExecuteSlotAsync(
+                                taskType, phaseRun, workflowRunId, groupInput, sharedContext, phase, loggerFactory, groupCts.Token)
+                                .ContinueWith(t =>
+                                {
+                                    if (t.IsCompletedSuccessfully &&
+                                        phaseRun.Tasks.LastOrDefault(r => r.TaskName == taskType.Name)?.Status == RunStatus.Failed)
+                                        groupCts.Cancel();
+                                }, TaskScheduler.Default));
+                            await Task.WhenAll(groupTasks);
+                        }
+                        else
+                        {
+                            var concurrentTasks = group.TaskTypes.Select(taskType =>
+                                ExecuteSlotAsync(taskType, phaseRun, workflowRunId, groupInput, sharedContext, phase, loggerFactory, ct));
+                            await Task.WhenAll(concurrentTasks);
+                        }
 
                         if (phaseRun.Tasks.Any(t => t.Status == RunStatus.Failed) && !phase.ContinueOnFailure)
                         {
@@ -106,6 +130,14 @@ public sealed class PhaseExecutor
 
         lock (phaseRun.Tasks)
             phaseRun.Tasks.Add(taskRun);
+
+        using var taskScope = taskLogger.BeginScope(new Dictionary<string, object?>
+        {
+            ["WorkflowRunId"] = workflowRunId,
+            ["PhaseRunId"]    = phaseRun.Id,
+            ["TaskRunId"]     = taskRun.Id,
+            ["TaskName"]      = taskType.Name
+        });
 
         var context = new TaskContext(
             workflowRunId,

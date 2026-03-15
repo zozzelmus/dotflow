@@ -50,7 +50,7 @@ public sealed class WorkflowValidator
             ValidateTaskRegistrations(phase, prefix, errors);
         }
 
-        ValidateNoCircularEventChains(workflow, errors);
+        ValidateEventTriggers(workflow, errors);
     }
 
     private void ValidateTaskRegistrations(PhaseDefinition phase, string prefix, List<string> errors)
@@ -78,8 +78,12 @@ public sealed class WorkflowValidator
         }
     }
 
-    private static void ValidateNoCircularEventChains(WorkflowDefinition workflow, List<string> errors)
+    private static void ValidateEventTriggers(WorkflowDefinition workflow, List<string> errors)
     {
+        var hasImmediatePhase = workflow.Phases.Any(p => p.Trigger is PhaseTrigger.Immediate);
+        if (!hasImmediatePhase)
+            errors.Add($"Workflow '{workflow.Id}' has no Immediate phase. At least one phase must use TriggeredImmediately() to start the workflow.");
+
         var eventToPhases = new Dictionary<string, List<string>>();
         foreach (var phase in workflow.Phases)
         {
@@ -88,39 +92,15 @@ public sealed class WorkflowValidator
             if (eventType is null) continue;
 
             if (!eventToPhases.TryGetValue(eventType, out var list))
-                eventToPhases[eventType] = list = new();
+                eventToPhases[eventType] = list = [];
             list.Add(phase.Name);
         }
 
-        // Simple DFS cycle detection
-        var visited = new HashSet<string>();
-        var stack = new HashSet<string>();
-
-        foreach (var phase in workflow.Phases)
+        foreach (var (eventType, phases) in eventToPhases)
         {
-            if (!visited.Contains(phase.Name))
-            {
-                DetectCycle(phase.Name, workflow, eventToPhases, visited, stack, errors, workflow.Id);
-            }
+            if (phases.Count > 1)
+                errors.Add($"Workflow '{workflow.Id}' has multiple phases triggered by event '{eventType}': {string.Join(", ", phases)}. Each event type should trigger at most one phase.");
         }
-    }
-
-    private static void DetectCycle(
-        string phaseName,
-        WorkflowDefinition workflow,
-        Dictionary<string, List<string>> eventToPhases,
-        HashSet<string> visited,
-        HashSet<string> stack,
-        List<string> errors,
-        string workflowId)
-    {
-        visited.Add(phaseName);
-        stack.Add(phaseName);
-
-        // This phase is simple — circular detection via events would need task metadata publishing analysis.
-        // For now we check direct structural cycles where phase A triggers event that triggers phase A again.
-
-        stack.Remove(phaseName);
     }
 
     private static string? GetEventType(PhaseTrigger trigger)

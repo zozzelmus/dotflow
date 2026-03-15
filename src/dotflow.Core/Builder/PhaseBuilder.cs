@@ -68,5 +68,11 @@ public class PhaseBuilder
         return this;
     }
 
+    public PhaseBuilder FailFastOnGroupFailure()
+    {
+        _definition.FailFastOnGroupFailure = true;
+        return this;
+    }
+
     internal PhaseDefinition Build() => _definition;
 }

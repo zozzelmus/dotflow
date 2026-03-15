@@ -31,5 +31,11 @@ public class WorkflowBuilder
         return this;
     }
 
+    public WorkflowBuilder WithTimeout(TimeSpan timeout)
+    {
+        _definition.Timeout = timeout;
+        return this;
+    }
+
     internal WorkflowDefinition Build() => _definition;
 }

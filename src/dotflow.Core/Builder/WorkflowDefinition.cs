@@ -8,4 +8,5 @@ public class WorkflowDefinition
     public string? Name { get; set; }
     public List<PhaseDefinition> Phases { get; init; } = new();
     public ResiliencyOptions? Resiliency { get; set; }
+    public TimeSpan? Timeout { get; set; }
 }

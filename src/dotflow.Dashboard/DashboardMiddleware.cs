@@ -45,7 +45,7 @@ public sealed class DashboardMiddleware
             return;
         }
 
-        if (_options.RequireAuthentication && !ctx.User.Identity?.IsAuthenticated == true)
+        if (_options.RequireAuthentication && ctx.User.Identity?.IsAuthenticated != true)
         {
             ctx.Response.StatusCode = 401;
             return;
@@ -57,8 +57,34 @@ public sealed class DashboardMiddleware
             return;
         }
 
+        // CSRF double-submit cookie
+        var csrfToken = ctx.Request.Cookies["__dotflow_csrf"];
+        if (string.IsNullOrEmpty(csrfToken))
+        {
+            csrfToken = GenerateCsrfToken();
+            ctx.Response.Cookies.Append("__dotflow_csrf", csrfToken, new CookieOptions
+            {
+                HttpOnly = false,
+                SameSite = SameSiteMode.Strict,
+                Secure   = ctx.Request.IsHttps
+            });
+        }
+        ctx.Items["_dotflow_csrf"] = csrfToken;
+
         var subPath = path[prefix.Length..].TrimStart('/');
         var method = ctx.Request.Method;
+
+        if (method == "POST" && !ctx.Request.ContentType?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var cookieToken = ctx.Request.Cookies["__dotflow_csrf"];
+            var form = await ctx.Request.ReadFormAsync(ctx.RequestAborted);
+            var formToken = form["__csrf_token"].FirstOrDefault();
+            if (string.IsNullOrEmpty(cookieToken) || cookieToken != formToken)
+            {
+                ctx.Response.StatusCode = 403;
+                return;
+            }
+        }
 
         try
         {
@@ -154,8 +180,9 @@ public sealed class DashboardMiddleware
         if (ctx.Request.Headers.ContainsKey("HX-Request"))
         {
             var prefix = _options.PathPrefix.TrimEnd('/');
+            var csrf = ctx.Items["_dotflow_csrf"] as string ?? "";
             ctx.Response.ContentType = "text/html; charset=utf-8";
-            await ctx.Response.WriteAsync(BuildRunDetailHtml(prefix, run));
+            await ctx.Response.WriteAsync(BuildRunDetailHtml(prefix, run, csrf));
         }
         else
         {
@@ -209,8 +236,9 @@ public sealed class DashboardMiddleware
 
         if (ctx.Request.Headers.ContainsKey("HX-Request"))
         {
+            var csrf = ctx.Items["_dotflow_csrf"] as string ?? "";
             ctx.Response.ContentType = "text/html; charset=utf-8";
-            await ctx.Response.WriteAsync(BuildWorkflowCardsHtml(prefix, summaries));
+            await ctx.Response.WriteAsync(BuildWorkflowCardsHtml(prefix, summaries, csrf));
         }
         else
         {
@@ -247,13 +275,14 @@ public sealed class DashboardMiddleware
         ctx.Response.ContentType = "text/html; charset=utf-8";
         var title = _options.Title;
         var prefix = _options.PathPrefix;
+        var csrf = ctx.Items["_dotflow_csrf"] as string ?? "";
         var html = subPath switch
         {
             "" or "index" => BuildOverviewPage(title, prefix),
             "workflows" => BuildWorkflowsPage(title, prefix),
             "runs" => BuildRunsPage(title, prefix),
             _ when subPath.StartsWith("runs/") => BuildRunDetailPage(title, prefix, subPath["runs/".Length..]),
-            _ when subPath.StartsWith("workflows/") => BuildWorkflowDetailPage(title, prefix, subPath["workflows/".Length..]),
+            _ when subPath.StartsWith("workflows/") => BuildWorkflowDetailPage(title, prefix, subPath["workflows/".Length..], csrf),
             _ => "<html><body><h1>404 - Not Found</h1></body></html>"
         };
         return ctx.Response.WriteAsync(html);
@@ -343,7 +372,7 @@ public sealed class DashboardMiddleware
         return sb.ToString();
     }
 
-    private static string BuildRunDetailHtml(string prefix, WorkflowRun run)
+    private static string BuildRunDetailHtml(string prefix, WorkflowRun run, string csrfToken = "")
     {
         var sb = new StringBuilder();
 
@@ -381,6 +410,7 @@ public sealed class DashboardMiddleware
         {
             sb.Append($"<div style=\"margin-top:1.5rem\">");
             sb.Append($"<form hx-post=\"{prefix}/api/runs/{run.Id}/cancel\" hx-confirm=\"Cancel this run?\">");
+            sb.Append($"<input type=\"hidden\" name=\"__csrf_token\" value=\"{csrfToken}\" />");
             sb.Append("<button type=\"submit\" class=\"btn btn-danger\">Cancel Run</button>");
             sb.Append("</form></div>");
         }
@@ -433,7 +463,7 @@ public sealed class DashboardMiddleware
         return sb.ToString();
     }
 
-    private string BuildWorkflowCardsHtml(string prefix, IEnumerable<WorkflowSummary> summaries)
+    private string BuildWorkflowCardsHtml(string prefix, IEnumerable<WorkflowSummary> summaries, string csrfToken = "")
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"wf-grid\">");
@@ -448,6 +478,7 @@ public sealed class DashboardMiddleware
             sb.Append($"<div class=\"wf-card-actions\">");
             sb.Append($"<a href=\"{prefix}/workflows/{wf.Id}\" class=\"btn btn-sm\">View</a> ");
             sb.Append($"<form hx-post=\"{prefix}/api/workflows/{wf.Id}/trigger\" hx-confirm=\"Trigger {wf.Name}?\" style=\"display:inline\">");
+            sb.Append($"<input type=\"hidden\" name=\"__csrf_token\" value=\"{csrfToken}\" />");
             sb.Append("<button class=\"btn btn-sm btn-primary\">&#9654; Trigger</button></form>");
             sb.Append("</div></div>");
         }
@@ -455,7 +486,7 @@ public sealed class DashboardMiddleware
         return sb.ToString();
     }
 
-    private string BuildWorkflowDetailPage(string title, string prefix, string workflowId)
+    private string BuildWorkflowDetailPage(string title, string prefix, string workflowId, string csrfToken = "")
     {
         prefix = prefix.TrimEnd('/');
         var wf = _workflows.FirstOrDefault(w => w.Id == workflowId);
@@ -469,6 +500,7 @@ public sealed class DashboardMiddleware
             $"<div class=\"detail-header\"><div><h2 style=\"margin:0\">{wfName}</h2>" +
             $"<code class=\"wf-id\">{wf.Id}</code></div>" +
             $"<form hx-post=\"{prefix}/api/workflows/{workflowId}/trigger\" hx-confirm=\"Trigger {wfName}?\">" +
+            $"<input type=\"hidden\" name=\"__csrf_token\" value=\"{csrfToken}\" />" +
             "<button class=\"btn btn-primary\">&#9654; Trigger Workflow</button></form></div>" +
             BuildPipelineDiagram(prefix, wf) +
             "<hr/><h3>Recent Runs</h3>" +
@@ -597,6 +629,9 @@ public sealed class DashboardMiddleware
         Nav(prefix, section) + "<hr/>" +
         body +
         "</body></html>";
+
+    private static string GenerateCsrfToken()
+        => Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 
     private static Task WriteJsonAsync(HttpContext ctx, object data)
     {

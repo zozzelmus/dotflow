@@ -9,4 +9,5 @@ public class PhaseDefinition
     public List<TaskSlot> Tasks { get; init; } = new();
     public ResiliencyOptions? Resiliency { get; set; }
     public bool ContinueOnFailure { get; set; }
+    public bool FailFastOnGroupFailure { get; set; }
 }

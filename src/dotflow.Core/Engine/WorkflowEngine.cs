@@ -56,6 +56,8 @@ public sealed class WorkflowEngine : IWorkflowEngine
         _logger.LogInformation("Workflow run {RunId} started for '{WorkflowId}'", run.Id, workflowId);
 
         var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        if (definition.Timeout.HasValue)
+            cts.CancelAfter(definition.Timeout.Value);
         var tracker = new RunTracker(cts);
 
         lock (_runsLock)
