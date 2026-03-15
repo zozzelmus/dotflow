@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dotflow.Sample.WebApi</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\dotflow.Core\dotflow.Core.csproj" />
+    <ProjectReference Include="..\..\src\dotflow.Persistence.InMemory\dotflow.Persistence.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\dotflow.Dashboard\dotflow.Dashboard.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>
