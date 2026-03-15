@@ -8,9 +8,12 @@ public static class InMemoryPersistenceExtensions
     /// <summary>
     /// Registers the in-memory pipeline store. Dev/test only — single-instance, not multi-container-safe.
     /// </summary>
-    public static IServiceCollection UseInMemoryStore(this IServiceCollection services)
+    public static IServiceCollection UseInMemoryStore(this IServiceCollection services,
+        Action<InMemoryPipelineStoreOptions>? configure = null)
     {
-        services.AddSingleton<IPipelineStore, InMemoryPipelineStore>();
+        var options = new InMemoryPipelineStoreOptions();
+        configure?.Invoke(options);
+        services.AddSingleton<IPipelineStore>(new InMemoryPipelineStore(options));
         return services;
     }
 }

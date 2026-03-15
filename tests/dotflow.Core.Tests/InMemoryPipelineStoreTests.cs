@@ -107,4 +107,74 @@ public class InMemoryPipelineStoreTests
         Assert.Equal(1, stats.SucceededRuns);
         Assert.Equal(1, stats.FailedRuns);
     }
+
+    [Fact]
+    public async Task MaxRunCount_EvictsOldestCompletedRuns()
+    {
+        var store = new InMemoryPipelineStore(new InMemoryPipelineStoreOptions { MaxRunCount = 5 });
+        var base_ = DateTimeOffset.UtcNow;
+
+        for (var i = 0; i < 10; i++)
+        {
+            var run = new WorkflowRun
+            {
+                WorkflowId = "wf1",
+                CreatedAt = base_.AddSeconds(i)
+            };
+            await store.SaveRunAsync(run);
+            run.Status = RunStatus.Succeeded;
+            await store.UpdateRunAsync(run);
+        }
+
+        var result = await store.ListRunsAsync(new RunQuery { PageSize = 100 });
+        Assert.True(result.TotalCount <= 5);
+    }
+
+    [Fact]
+    public async Task MaxRunCount_NeverEvictsActiveRuns()
+    {
+        var store = new InMemoryPipelineStore(new InMemoryPipelineStoreOptions { MaxRunCount = 3 });
+        var base_ = DateTimeOffset.UtcNow;
+
+        // 2 completed runs
+        for (var i = 0; i < 2; i++)
+        {
+            var run = new WorkflowRun { WorkflowId = "wf1", CreatedAt = base_.AddSeconds(i) };
+            await store.SaveRunAsync(run);
+            run.Status = RunStatus.Succeeded;
+            await store.UpdateRunAsync(run);
+        }
+
+        // 3 active runs that would push total above the cap
+        var activeIds = new List<string>();
+        for (var i = 0; i < 3; i++)
+        {
+            var run = new WorkflowRun { WorkflowId = "wf1", CreatedAt = base_.AddSeconds(10 + i) };
+            await store.SaveRunAsync(run);
+            run.Status = RunStatus.Running;
+            await store.UpdateRunAsync(run);
+            activeIds.Add(run.Id);
+        }
+
+        // All active runs must still be retrievable
+        foreach (var id in activeIds)
+            Assert.NotNull(await store.GetRunAsync(id));
+    }
+
+    [Fact]
+    public async Task MaxRunCount_Zero_DisablesCap()
+    {
+        var store = new InMemoryPipelineStore(new InMemoryPipelineStoreOptions { MaxRunCount = 0 });
+
+        for (var i = 0; i < 20; i++)
+        {
+            var run = new WorkflowRun { WorkflowId = "wf1" };
+            await store.SaveRunAsync(run);
+            run.Status = RunStatus.Succeeded;
+            await store.UpdateRunAsync(run);
+        }
+
+        var result = await store.ListRunsAsync(new RunQuery { PageSize = 100 });
+        Assert.Equal(20, result.TotalCount);
+    }
 }

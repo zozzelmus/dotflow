@@ -14,6 +14,12 @@ public sealed class InMemoryPipelineStore : IPipelineStore
     private readonly ConcurrentDictionary<string, WorkflowRun> _runs = new();
     private readonly ConcurrentDictionary<string, List<EventEnvelope>> _events = new();
     private readonly Lock _eventsLock = new();
+    private readonly InMemoryPipelineStoreOptions _options;
+
+    public InMemoryPipelineStore(InMemoryPipelineStoreOptions? options = null)
+    {
+        _options = options ?? new InMemoryPipelineStoreOptions();
+    }
 
     public Task SaveRunAsync(WorkflowRun run, CancellationToken ct = default)
     {
@@ -24,7 +30,26 @@ public sealed class InMemoryPipelineStore : IPipelineStore
     public Task UpdateRunAsync(WorkflowRun run, CancellationToken ct = default)
     {
         _runs[run.Id] = run;
+        TrimIfNeeded();
         return Task.CompletedTask;
+    }
+
+    private void TrimIfNeeded()
+    {
+        if (_options.MaxRunCount <= 0 || _runs.Count <= _options.MaxRunCount) return;
+
+        var evictable = _runs.Values
+            .Where(r => r.Status != RunStatus.Running && r.Status != RunStatus.Pending)
+            .OrderBy(r => r.CreatedAt)
+            .Take(_runs.Count - _options.MaxRunCount)
+            .Select(r => r.Id)
+            .ToList();
+
+        foreach (var id in evictable)
+        {
+            _runs.TryRemove(id, out _);
+            _events.TryRemove(id, out _);
+        }
     }
 
     public Task AppendEventAsync(string runId, EventEnvelope evt, CancellationToken ct = default)
