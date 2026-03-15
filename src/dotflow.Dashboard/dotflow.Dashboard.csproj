@@ -5,7 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Dashboard</RootNamespace>
+    <PackageId>dotflow.Dashboard</PackageId>
+    <Description>ASP.NET Core dashboard middleware for dotflow — real-time workflow monitoring and management UI.</Description>
+    <Authors>Brandon Parker</Authors>
+    <PackageTags>workflow;dashboard;aspnetcore;htmx;dotnet</PackageTags>
+    <RepositoryUrl>https://github.com/zozzelmus/dotflow</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\dotflow.Core\dotflow.Core.csproj" />

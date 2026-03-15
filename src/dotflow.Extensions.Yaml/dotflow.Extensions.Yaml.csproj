@@ -5,7 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Extensions.Yaml</RootNamespace>
+    <PackageId>dotflow.Extensions.Yaml</PackageId>
+    <Description>YAML configuration loader extension for dotflow.</Description>
+    <Authors>Brandon Parker</Authors>
+    <PackageTags>workflow;yaml;configuration;dotnet</PackageTags>
+    <RepositoryUrl>https://github.com/zozzelmus/dotflow</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\dotflow.Core\dotflow.Core.csproj" />

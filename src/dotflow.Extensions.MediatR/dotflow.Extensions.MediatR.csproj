@@ -5,7 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Extensions.MediatR</RootNamespace>
+    <PackageId>dotflow.Extensions.MediatR</PackageId>
+    <Description>MediatR event bus integration for dotflow.</Description>
+    <Authors>Brandon Parker</Authors>
+    <PackageTags>workflow;mediatr;event-driven;dotnet</PackageTags>
+    <RepositoryUrl>https://github.com/zozzelmus/dotflow</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\dotflow.Core\dotflow.Core.csproj" />

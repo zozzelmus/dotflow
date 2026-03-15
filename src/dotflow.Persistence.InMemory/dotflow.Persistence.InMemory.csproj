@@ -5,7 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Persistence.InMemory</RootNamespace>
+    <PackageId>dotflow.Persistence.InMemory</PackageId>
+    <Description>In-memory persistence provider for dotflow. Suitable for development and testing.</Description>
+    <Authors>Brandon Parker</Authors>
+    <PackageTags>workflow;in-memory;persistence;dotnet</PackageTags>
+    <RepositoryUrl>https://github.com/zozzelmus/dotflow</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\dotflow.Core\dotflow.Core.csproj" />
