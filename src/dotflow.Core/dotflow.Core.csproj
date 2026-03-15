@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow</RootNamespace>
+    <Version>0.1.4</Version>
     <PackageId>flowdotnet.Core</PackageId>
     <Description>Core engine, abstractions, and fluent builder for dotflow — a .NET event-driven workflow engine.</Description>
     <Authors>Brandon Parker</Authors>

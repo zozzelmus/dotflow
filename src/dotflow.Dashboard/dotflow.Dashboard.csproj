@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Dashboard</RootNamespace>
+    <Version>0.1.4</Version>
     <PackageId>flowdotnet.Dashboard</PackageId>
     <Description>ASP.NET Core dashboard middleware for dotflow — real-time workflow monitoring and management UI.</Description>
     <Authors>Brandon Parker</Authors>

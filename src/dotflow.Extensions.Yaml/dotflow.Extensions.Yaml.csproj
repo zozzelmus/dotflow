@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Extensions.Yaml</RootNamespace>
+    <Version>0.1.4</Version>
     <PackageId>flowdotnet.Extensions.Yaml</PackageId>
     <Description>YAML configuration loader extension for dotflow.</Description>
     <Authors>Brandon Parker</Authors>

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Persistence.InMemory</RootNamespace>
+    <Version>0.1.4</Version>
     <PackageId>flowdotnet.Persistence.InMemory</PackageId>
     <Description>In-memory persistence provider for dotflow. Suitable for development and testing.</Description>
     <Authors>Brandon Parker</Authors>
