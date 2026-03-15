@@ -183,8 +183,11 @@ Phases with no trigger (or `trigger: { type: Immediate }`) all fire at the same 
 ## Running the samples
 
 ```bash
-# Console demo
+# Console demo (fluent builder)
 dotnet run --project samples/dotflow.Sample.Basic
+
+# YAML config demo (parallel phases + event-driven)
+dotnet run --project samples/dotflow.Sample.Yaml
 
 # Web host with dashboard at http://localhost:5000/dotflow
 dotnet run --project samples/dotflow.Sample.WebApi

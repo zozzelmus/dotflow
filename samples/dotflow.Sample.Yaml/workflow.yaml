@@ -1,0 +1,23 @@
+workflows:
+  - id: user-onboarding
+    name: User Onboarding
+
+    phases:
+      # These two phases have no trigger, so they both start immediately
+      # and run concurrently when the workflow is triggered.
+      - name: send-welcome-email
+        tasks:
+          - type: "Dotflow.Sample.Yaml.Tasks.SendWelcomeEmailTask, dotflow.Sample.Yaml"
+
+      - name: provision-storage
+        tasks:
+          - type: "Dotflow.Sample.Yaml.Tasks.ProvisionStorageTask, dotflow.Sample.Yaml"
+
+      # This phase starts only after ProvisionStorageTask publishes StorageProvisionedEvent.
+      # It reads the storageBucket output set by ProvisionStorageTask via shared context.
+      - name: activate-account
+        trigger:
+          type: OnEvent
+          eventType: "Dotflow.Sample.Yaml.StorageProvisionedEvent, dotflow.Sample.Yaml"
+        tasks:
+          - type: "Dotflow.Sample.Yaml.Tasks.ActivateAccountTask, dotflow.Sample.Yaml"
