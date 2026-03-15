@@ -8,7 +8,7 @@ namespace Dotflow.Events;
 /// Default in-process event bus. Dispatches to subscribers synchronously within PublishAsync,
 /// so callers can rely on all handlers having run before PublishAsync returns.
 /// </summary>
-public sealed class InternalEventBus : IEventBus
+internal sealed class InternalEventBus : IEventBus
 {
     private readonly ILogger<InternalEventBus> _logger;
     private readonly List<(Type EventType, Func<DotflowEvent, CancellationToken, Task> Handler)> _handlers = [];

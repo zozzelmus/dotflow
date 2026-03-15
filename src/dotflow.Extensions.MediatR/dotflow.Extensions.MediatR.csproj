@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Extensions.MediatR</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <PackageId>flowdotnet.Extensions.MediatR</PackageId>
     <Description>MediatR event bus integration for dotflow.</Description>
     <Authors>Brandon Parker</Authors>

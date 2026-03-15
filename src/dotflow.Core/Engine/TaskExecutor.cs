@@ -8,7 +8,7 @@ using Polly.Timeout;
 
 namespace Dotflow.Engine;
 
-public sealed class TaskExecutor
+internal sealed class TaskExecutor
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<TaskExecutor> _logger;

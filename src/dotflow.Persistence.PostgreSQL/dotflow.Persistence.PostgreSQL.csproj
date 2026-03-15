@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow.Persistence.PostgreSQL</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <PackageId>flowdotnet.Persistence.PostgreSQL</PackageId>
     <Description>PostgreSQL persistence provider for dotflow. Uses Dapper and Npgsql with JSONB run storage.</Description>
     <Authors>Brandon Parker</Authors>

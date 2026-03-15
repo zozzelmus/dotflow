@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dotflow.Engine;
 
-public sealed class PhaseExecutor
+internal sealed class PhaseExecutor
 {
     private readonly TaskExecutor _taskExecutor;
     private readonly IEventBus _eventBus;

@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dotflow</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <PackageId>flowdotnet.Core</PackageId>
     <Description>Core engine, abstractions, and fluent builder for dotflow — a .NET event-driven workflow engine.</Description>
     <Authors>Brandon Parker</Authors>
@@ -17,6 +17,12 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>dotflow.Core.Tests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup>

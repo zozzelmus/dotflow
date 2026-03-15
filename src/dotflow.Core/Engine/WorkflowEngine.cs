@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dotflow.Engine;
 
-public sealed class WorkflowEngine : IWorkflowEngine
+internal sealed class WorkflowEngine : IWorkflowEngine
 {
     private readonly IReadOnlyList<WorkflowDefinition> _workflows;
     private readonly IPipelineStore _store;
