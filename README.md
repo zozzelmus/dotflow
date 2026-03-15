@@ -107,6 +107,79 @@ Polly v8. Configure globally, per workflow, or per phase — most specific wins:
 - **`dotflow.Extensions.MediatR`** — replaces the internal event bus with MediatR. Use `INotificationHandler<T>` for subscribers.
 - **`dotflow.Extensions.Yaml`** — load workflow definitions from YAML configuration files.
 
+### YAML workflows
+
+Register workflows from a YAML file instead of the fluent builder:
+
+```csharp
+services.AddDotflow(dotflow => dotflow
+    .LoadFromYaml(File.ReadAllText("workflows.yaml")));
+```
+
+Task and event types must be assembly-qualified names (`"MyApp.Tasks.ValidateOrderTask, MyApp"`).
+
+**Basic** — a single phase, tasks run sequentially:
+
+```yaml
+workflows:
+  - id: order-processing
+    name: Order Processing
+    phases:
+      - name: validation
+        tasks:
+          - type: "MyApp.Tasks.ValidateOrderTask, MyApp"
+          - type: "MyApp.Tasks.EnrichOrderTask, MyApp"
+```
+
+**Event-driven** — phases wired together by events. Each phase starts when the named event is published by a task in a preceding phase:
+
+```yaml
+workflows:
+  - id: order-processing
+    name: Order Processing
+    phases:
+      - name: validation
+        tasks:
+          - type: "MyApp.Tasks.ValidateOrderTask, MyApp"
+
+      - name: payment
+        trigger:
+          type: OnEvent
+          eventType: "MyApp.Events.OrderValidatedEvent, MyApp"
+        tasks:
+          - type: "MyApp.Tasks.ChargeCardTask, MyApp"
+          - type: "MyApp.Tasks.SendReceiptTask, MyApp"
+
+      - name: fulfillment
+        trigger:
+          type: OnEvent
+          eventType: "MyApp.Events.PaymentProcessedEvent, MyApp"
+        tasks:
+          - type: "MyApp.Tasks.ShipOrderTask, MyApp"
+```
+
+**Parallelism** — multiple `Immediate` phases all start concurrently at trigger time:
+
+```yaml
+workflows:
+  - id: new-user-setup
+    name: New User Setup
+    phases:
+      - name: send-welcome-email
+        tasks:
+          - type: "MyApp.Tasks.SendWelcomeEmailTask, MyApp"
+
+      - name: provision-storage
+        tasks:
+          - type: "MyApp.Tasks.ProvisionStorageTask, MyApp"
+
+      - name: sync-to-crm
+        tasks:
+          - type: "MyApp.Tasks.SyncToCrmTask, MyApp"
+```
+
+Phases with no trigger (or `trigger: { type: Immediate }`) all fire at the same time. Each phase's task list runs sequentially within that phase. For in-code concurrent task groups within a single phase, use the fluent builder's `AddConcurrentGroup`.
+
 ## Running the samples
 
 ```bash
